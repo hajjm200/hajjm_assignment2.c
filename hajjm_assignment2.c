@@ -77,16 +77,39 @@ struct movie* createMovie(char* line) {
         return NULL;
     }
 
-    m->languageCount = 0;
-    char* lang = strtok(token + 1, ";]");
-    while (lang && m->languageCount < MAX_LANGUAGES) {
-        strncpy(m->languages[m->languageCount], lang, MAX_LANGUAGE_LENGTH - 1);
-        m->languages[m->languageCount][MAX_LANGUAGE_LENGTH - 1] = '\0';
-        m->languageCount++;
-        lang = strtok(NULL, ";]");
-    }
+    token = strtok(NULL, ",");
+if (!token) {
+    fprintf(stderr, "Missing languages.\n");
+    free(m->title);
+    free(m);
+    return NULL;
+}
 
-    token = strtok(NULL, "\n");
+// Process languages in a copy so we don’t break strtok chain
+char langBuf[100];
+strncpy(langBuf, token, sizeof(langBuf) - 1);
+langBuf[sizeof(langBuf) - 1] = '\0';
+
+m->languageCount = 0;
+char* lang = strtok(langBuf + 1, ";]"); // skip opening '['
+while (lang && m->languageCount < MAX_LANGUAGES) {
+    strncpy(m->languages[m->languageCount], lang, MAX_LANGUAGE_LENGTH - 1);
+    m->languages[m->languageCount][MAX_LANGUAGE_LENGTH - 1] = '\0';
+    m->languageCount++;
+    lang = strtok(NULL, ";]");
+}
+
+// Get next real field: the rating
+token = strtok(NULL, "\n");
+if (!token) {
+    fprintf(stderr, "Missing rating.\n");
+    free(m->title);
+    free(m);
+    return NULL;
+}
+m->rating = strtof(token, NULL);
+
+
     if (!token) {
         fprintf(stderr, "Missing rating.\n");
         free(m->title);
