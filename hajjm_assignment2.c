@@ -21,36 +21,36 @@ int getMenuChoice();
 struct movie* createMovie(char* line);
 struct movie* loadMovies(const char* filename, int* movieCount);
 void showMoviesByYear(struct movie* list, int year);
-void showHighestRatedEachYear(struct movie* list);
-void showMoviesByLanguage(struct movie* list, char* language);
-void handleUserChoice(int choice, struct movie* list);
-void freeMovies(struct movie* list);
+void showHighestRatedPerYear(struct movie* list);
+void showMoviesByLanguage(struct movie* list, const char* language);
+void freeMovieList(struct movie* list);
 
-// Print the menu options
+// Function to display the menu
 void printMenu() {
     printf("\n1. Show movies released in the specified year\n");
     printf("2. Show highest rated movie for each year\n");
     printf("3. Show the title and year of release of all movies in a specific language\n");
-    printf("4. Exit from the program\n\n");
+    printf("4. Exit from the program\n");
 }
 
-// Ask the user to enter a menu choice
+// Function to get user menu choice
 int getMenuChoice() {
     int choice;
-    printf("Enter a choice from 1 to 4: ");
+    printf("\nEnter a choice from 1 to 4: ");
     scanf("%d", &choice);
     return choice;
 }
 
-// Create a movie struct from a CSV line
+// Function to create a new movie struct from a line of CSV
 struct movie* createMovie(char* line) {
     struct movie* m = malloc(sizeof(struct movie));
     if (!m) {
-        fprintf(stderr, "Memory allocation failed for movie struct.\n");
+        fprintf(stderr, "Memory allocation failed.\n");
         exit(1);
     }
     m->next = NULL;
 
+    // --- Title ---
     char* token = strtok(line, ",");
     if (!token) {
         fprintf(stderr, "Missing title.\n");
@@ -60,6 +60,7 @@ struct movie* createMovie(char* line) {
     m->title = malloc(strlen(token) + 1);
     strcpy(m->title, token);
 
+    // --- Year ---
     token = strtok(NULL, ",");
     if (!token) {
         fprintf(stderr, "Missing year.\n");
@@ -69,6 +70,7 @@ struct movie* createMovie(char* line) {
     }
     m->year = atoi(token);
 
+    // --- Languages ---
     token = strtok(NULL, ",");
     if (!token) {
         fprintf(stderr, "Missing languages.\n");
@@ -77,39 +79,21 @@ struct movie* createMovie(char* line) {
         return NULL;
     }
 
-    token = strtok(NULL, ",");
-if (!token) {
-    fprintf(stderr, "Missing languages.\n");
-    free(m->title);
-    free(m);
-    return NULL;
-}
+    char langBuf[100];
+    strncpy(langBuf, token, sizeof(langBuf) - 1);
+    langBuf[sizeof(langBuf) - 1] = '\0';
 
-// Process languages in a copy so we don’t break strtok chain
-char langBuf[100];
-strncpy(langBuf, token, sizeof(langBuf) - 1);
-langBuf[sizeof(langBuf) - 1] = '\0';
+    m->languageCount = 0;
+    char* lang = strtok(langBuf + 1, ";]");
+    while (lang && m->languageCount < MAX_LANGUAGES) {
+        strncpy(m->languages[m->languageCount], lang, MAX_LANGUAGE_LENGTH - 1);
+        m->languages[m->languageCount][MAX_LANGUAGE_LENGTH - 1] = '\0';
+        m->languageCount++;
+        lang = strtok(NULL, ";]");
+    }
 
-m->languageCount = 0;
-char* lang = strtok(langBuf + 1, ";]"); // skip opening '['
-while (lang && m->languageCount < MAX_LANGUAGES) {
-    strncpy(m->languages[m->languageCount], lang, MAX_LANGUAGE_LENGTH - 1);
-    m->languages[m->languageCount][MAX_LANGUAGE_LENGTH - 1] = '\0';
-    m->languageCount++;
-    lang = strtok(NULL, ";]");
-}
-
-// Get next real field: the rating
-token = strtok(NULL, "\n");
-if (!token) {
-    fprintf(stderr, "Missing rating.\n");
-    free(m->title);
-    free(m);
-    return NULL;
-}
-m->rating = strtof(token, NULL);
-
-
+    // --- Rating ---
+    token = strtok(NULL, ",\r\n");
     if (!token) {
         fprintf(stderr, "Missing rating.\n");
         free(m->title);
@@ -121,13 +105,12 @@ m->rating = strtof(token, NULL);
     return m;
 }
 
-
-// Read and process all movies from a CSV file
+// Function to read the CSV and create a linked list
 struct movie* loadMovies(const char* filename, int* movieCount) {
     FILE* file = fopen(filename, "r");
     if (!file) {
-        perror("Error opening file");
-        exit(EXIT_FAILURE);
+        fprintf(stderr, "Could not open file: %s\n", filename);
+        exit(1);
     }
 
     char* line = NULL;
@@ -136,26 +119,22 @@ struct movie* loadMovies(const char* filename, int* movieCount) {
     struct movie* head = NULL;
     struct movie* tail = NULL;
 
-    getline(&line, &len, file); // skip header
+    // Skip header
+    getline(&line, &len, file);
+
+    *movieCount = 0;
 
     while ((read = getline(&line, &len, file)) != -1) {
- struct movie* m = createMovie(line);
-if (m != NULL) {
-    (*movieCount)++;
-    if (!head) {
-        head = m;
-        tail = m;
-    } else {
-        tail->next = m;
-        tail = m;
-    }
-}
-        if (!head) {
-            head = m;
-            tail = m;
-        } else {
-            tail->next = m;
-            tail = m;
+        struct movie* m = createMovie(line);
+        if (m != NULL) {
+            (*movieCount)++;
+            if (!head) {
+                head = m;
+                tail = m;
+            } else {
+                tail->next = m;
+                tail = m;
+            }
         }
     }
 
@@ -164,7 +143,7 @@ if (m != NULL) {
     return head;
 }
 
-// Show all movies released in a given year
+// Show movies released in a specific year
 void showMoviesByYear(struct movie* list, int year) {
     int found = 0;
     while (list) {
@@ -175,31 +154,33 @@ void showMoviesByYear(struct movie* list, int year) {
         list = list->next;
     }
     if (!found) {
-        printf("No data about movies released in the year %d\n", year);
+        printf("No data about movies released in the year %d.\n", year);
     }
 }
 
-// Show the highest rated movie for each year
-void showHighestRatedEachYear(struct movie* list) {
-    struct movie* top[122] = {NULL}; // for years 1900 to 2021
+// Show highest rated movie per year
+void showHighestRatedPerYear(struct movie* list) {
+    float ratings[10000] = {0.0};
+    char* titles[10000] = {NULL};
 
     while (list) {
-        int index = list->year - 1900;
-        if (!top[index] || list->rating > top[index]->rating) {
-            top[index] = list;
+        int y = list->year;
+        if (!titles[y] || list->rating > ratings[y]) {
+            ratings[y] = list->rating;
+            titles[y] = list->title;
         }
         list = list->next;
     }
 
-    for (int i = 0; i < 122; i++) {
-        if (top[i]) {
-            printf("%d %.1f %s\n", top[i]->year, top[i]->rating, top[i]->title);
+    for (int i = 0; i < 10000; i++) {
+        if (titles[i]) {
+            printf("%d %.1f %s\n", i, ratings[i], titles[i]);
         }
     }
 }
 
-// Show all movies released in a specific language
-void showMoviesByLanguage(struct movie* list, char* language) {
+// Show movies in a specific language
+void showMoviesByLanguage(struct movie* list, const char* language) {
     int found = 0;
     while (list) {
         for (int i = 0; i < list->languageCount; i++) {
@@ -212,31 +193,12 @@ void showMoviesByLanguage(struct movie* list, char* language) {
         list = list->next;
     }
     if (!found) {
-        printf("No data about movies released in %s\n", language);
+        printf("No movies released in %s.\n", language);
     }
 }
 
-// Handle the user's menu selection
-void handleUserChoice(int choice, struct movie* list) {
-    if (choice == 1) {
-        int year;
-        printf("Enter the year for which you want to see movies: ");
-        scanf("%d", &year);
-        showMoviesByYear(list, year);
-    } else if (choice == 2) {
-        showHighestRatedEachYear(list);
-    } else if (choice == 3) {
-        char language[21];
-        printf("Enter the language for which you want to see movies: ");
-        scanf("%s", language);
-        showMoviesByLanguage(list, language);
-    } else if (choice != 4) {
-        printf("You entered an incorrect choice. Try again.\n");
-    }
-}
-
-// Free memory used by the linked list
-void freeMovies(struct movie* list) {
+// Free all allocated memory
+void freeMovieList(struct movie* list) {
     while (list) {
         struct movie* temp = list;
         list = list->next;
@@ -245,11 +207,10 @@ void freeMovies(struct movie* list) {
     }
 }
 
-// MAIN function: clean and simple
+// Main
 int main(int argc, char* argv[]) {
     if (argc < 2) {
-        printf("You must provide the name of the file to process\n");
-        printf("Example usage: ./movies movies.csv\n");
+        fprintf(stderr, "Usage: %s <csv file>\n", argv[0]);
         return 1;
     }
 
@@ -261,9 +222,23 @@ int main(int argc, char* argv[]) {
     do {
         printMenu();
         choice = getMenuChoice();
-        handleUserChoice(choice, movieList);
+        if (choice == 1) {
+            int year;
+            printf("Enter the year for which you want to see movies: ");
+            scanf("%d", &year);
+            showMoviesByYear(movieList, year);
+        } else if (choice == 2) {
+            showHighestRatedPerYear(movieList);
+        } else if (choice == 3) {
+            char lang[21];
+            printf("Enter the language for which you want to see movies: ");
+            scanf("%s", lang);
+            showMoviesByLanguage(movieList, lang);
+        } else if (choice != 4) {
+            printf("Invalid choice. Try again.\n");
+        }
     } while (choice != 4);
 
-    freeMovies(movieList);
+    freeMovieList(movieList);
     return 0;
 }
