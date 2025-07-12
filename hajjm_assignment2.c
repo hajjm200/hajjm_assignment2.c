@@ -93,14 +93,16 @@ struct movie* createMovie(char* line) {
     }
 
     // --- Rating ---
-    token = strtok(NULL, ",\r\n");
-    if (!token) {
-        fprintf(stderr, "Missing rating.\n");
-        free(m->title);
-        free(m);
-        return NULL;
-    }
-    m->rating = strtof(token, NULL);
+// --- Rating ---
+char* ratingStart = strrchr(line, ',');
+if (!ratingStart || *(ratingStart + 1) == '\0') {
+    fprintf(stderr, "Missing rating.\n");
+    free(m->title);
+    free(m);
+    return NULL;
+}
+m->rating = strtof(ratingStart + 1, NULL);
+
 
     return m;
 }
