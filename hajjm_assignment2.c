@@ -189,6 +189,16 @@ void showMoviesByLanguage(struct movie* head, char* language) {
     }
 }
 
+void freeMovieList(struct movie* head) {
+    struct movie* temp;
+    while (head != NULL) {
+        temp = head;
+        head = head->next;
+        free(temp->title);
+        free(temp->languages);
+        free(temp);
+    }
+}
 
 int main(int argc, char* argv[]) {
     if (argc != 2) {
@@ -200,5 +210,6 @@ int main(int argc, char* argv[]) {
     printf("Processed file %s and parsed data for %d movies\n", argv[1], count);
     showMenu(list);
     // Free memory here
+    freeMovieList(list);
     return 0;
 }
