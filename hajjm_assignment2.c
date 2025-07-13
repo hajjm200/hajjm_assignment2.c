@@ -67,46 +67,6 @@ struct movie* processFile(char* filename, int* count) {
     return head;
 }
 
-
-
-/*
-  -  Loop until user selects Exit (4).
-  -  Prompt for choice (1-4).
-  -  Handle invalid input with:
-*/
-void showMenu(struct movie* head) {
-    int choice = 0;
-
-    while (1) {
-        printf("\n1. Show movies released in the specified year\n");
-        printf("2. Show highest rated movie for each year\n");
-        printf("3. Show the title and year of release of all movies in a specific language\n");
-        printf("4. Exit from the program\n\n");
-
-        printf("Enter a choice from 1 to 4: ");
-        scanf("%d", &choice);
-
-        if (choice == 1) {
-            int year;
-            printf("Enter the year for which you want to see movies: ");
-            scanf("%d", &year);
-            showMoviesByYear(head, year);
-        } else if (choice == 2) {
-            showHighestRatedByYear(head);
-        } else if (choice == 3) {
-            char language[21];
-            printf("Enter the language for which you want to see movies: ");
-            scanf("%s", language);
-            showMoviesByLanguage(head, language);
-        } else if (choice == 4) {
-            break;
-        } else {
-            printf("You entered an incorrect choice. Try again.\n");
-        }
-    }
-}
-
-
 void showMoviesByYear(struct movie* head, int year) {
     int found = 0;
     struct movie* curr = head;
@@ -188,6 +148,44 @@ void showMoviesByLanguage(struct movie* head, char* language) {
         printf("No data about movies released in %s\n", language);
     }
 }
+/*
+  -  Loop until user selects Exit (4).
+  -  Prompt for choice (1-4).
+  -  Handle invalid input with:
+*/
+void showMenu(struct movie* head) {
+    int choice = 0;
+
+    while (1) {
+        printf("\n1. Show movies released in the specified year\n");
+        printf("2. Show highest rated movie for each year\n");
+        printf("3. Show the title and year of release of all movies in a specific language\n");
+        printf("4. Exit from the program\n\n");
+
+        printf("Enter a choice from 1 to 4: ");
+        scanf("%d", &choice);
+
+        if (choice == 1) {
+            int year;
+            printf("Enter the year for which you want to see movies: ");
+            scanf("%d", &year);
+            showMoviesByYear(head, year);
+        } else if (choice == 2) {
+            showHighestRatedByYear(head);
+        } else if (choice == 3) {
+            char language[21];
+            printf("Enter the language for which you want to see movies: ");
+            scanf("%s", language);
+            showMoviesByLanguage(head, language);
+        } else if (choice == 4) {
+            break;
+        } else {
+            printf("You entered an incorrect choice. Try again.\n");
+        }
+    }
+}
+
+
 
 void freeMovieList(struct movie* head) {
     struct movie* temp;
