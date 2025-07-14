@@ -2,23 +2,26 @@
 #include <stdlib.h>
 #include <string.h>
 
+
+// struct for movies
+// Stores all the info for one movie, including its title, year, languages, rating, and a pointer to the next movie 
 struct movie {
-    char* title;
+    char* title; // A pointer to a string 
     int year;
-    char* languages;
+    char* languages; // ??char languages [5][21]
     float rating;
-    struct movie* next;
+    struct movie* next; // a pointer to the next movie
 };
 
-/* This function should:
-  -  Open the file.
-  -  Skip the header line.
-  -  For each line, parse title, year, languages, rating.
-  -  Create a struct movie* using malloc.
-  -  Append to the linkekd list.
-  -  Update *count.
-*/
+/*
+ * Reads a CSV file and builds a linked list of movie structs.
+ * Parameters: 
+ *  filename: The name of the file to read
+ *  count:    pointer to an integer where the number of movies will be stored
+ * Returns: Pointer to the head of the linked list of movies
+ */
 struct movie* processFile(char* filename, int* count) {
+    // Open the specified file for reading only
     FILE* file = fopen(filename, "r");
     if (!file) {
         printf("Could not open file %s\n", filename);
@@ -67,6 +70,15 @@ struct movie* processFile(char* filename, int* count) {
     return head;
 }
 
+
+/*
+ * Displays all movies released in a given year.
+ * Parameters:
+ *    head: pointer to the head of the linked list
+ *    year: the year to filter movies by
+ * Returns: None 
+ */
+
 void showMoviesByYear(struct movie* head, int year) {
     int found = 0;
     struct movie* curr = head;
@@ -84,15 +96,20 @@ void showMoviesByYear(struct movie* head, int year) {
     }
 }
 
-#include <float.h> // for FLT_MIN
 
+/*
+ * Finds and displays the highest-rated movie for each year.
+ * Parameters:
+ *    head: pointer to the head of the linked list
+ * Returns: None 
+ */
 void showHighestRatedByYear(struct movie* head) {
     struct movie* curr = head;
 
     // Loop through all years from 1900 to 2021
     for (int year = 1900; year <= 2021; year++) {
         struct movie* best = NULL;
-        float highestRating = FLT_MIN;
+        float highestRating = -1 ;
 
         curr = head;
         while (curr != NULL) {
@@ -109,6 +126,13 @@ void showHighestRatedByYear(struct movie* head) {
     }
 }
 
+/*
+ * Displays all movies available in a specific language.
+ * Parameters:
+ *    head: pointer to the head of the linked list
+ *    language: string of the language to filter by (case-sensitive)
+ * Returns: None 
+ */
 void showMoviesByLanguage(struct movie* head, char* language) {
     struct movie* curr = head;
     int found = 0;
@@ -148,11 +172,14 @@ void showMoviesByLanguage(struct movie* head, char* language) {
         printf("No data about movies released in %s\n", language);
     }
 }
+
+
 /*
-  -  Loop until user selects Exit (4).
-  -  Prompt for choice (1-4).
-  -  Handle invalid input with:
-*/
+ * Displays an interactive menu and handles user choices.
+ * Parameters:
+ *    head: pointer to the head of the linked list
+ * Returns: None 
+ */
 void showMenu(struct movie* head) {
     int choice = 0;
 
@@ -186,6 +213,12 @@ void showMenu(struct movie* head) {
 }
 
 
+/*
+ * Frees all memory allocated for the linked list of movies.
+ * Parameters:
+ *    head: pointer to the head of the linked list
+ * Returns: None
+ */
 
 void freeMovieList(struct movie* head) {
     struct movie* temp;
